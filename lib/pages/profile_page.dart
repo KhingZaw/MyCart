@@ -2,8 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:testing_app/data/repository/profile_provider.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  @override
+  void initState() {
+    super.initState();
+    // Load user data if not already loaded
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    if (profileProvider.username.isEmpty) {
+      profileProvider.loadUserData();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

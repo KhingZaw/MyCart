@@ -39,7 +39,11 @@ class MyApp extends StatelessWidget {
     if (token != null) {
       // Trigger loading of user data in ProfileProvider
       Future.microtask(() {
-        Provider.of<ProfileProvider>(context, listen: false).loadUserData();
+        final profileProvider =
+            Provider.of<ProfileProvider>(context, listen: false);
+        if (profileProvider.username.isEmpty) {
+          profileProvider.loadUserData();
+        }
       });
     }
     return MaterialApp(
