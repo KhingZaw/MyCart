@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:testing_app/data/models/carts.dart';
-import 'package:testing_app/data/services/cart_service.dart';
+import 'package:testing_app/data/repository/cart_provider.dart';
 
 class DetailPage extends StatefulWidget {
   final int id;
@@ -11,12 +12,12 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
-  late Future<Carts?> _cartFuture;
-  CartService cartService = CartService();
   @override
   void initState() {
     super.initState();
-    _cartFuture = cartService.getCartById(id: widget.id);
+    Future.microtask(() {
+      Provider.of<CartProvider>(context, listen: false).fetchCartID(widget.id);
+    });
   }
 
   @override
@@ -31,15 +32,19 @@ class _DetailPageState extends State<DetailPage> {
         centerTitle: true,
         backgroundColor: Colors.blue,
       ),
-      body: FutureBuilder<Carts?>(
-        future: _cartFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      body: Consumer<CartProvider>(
+        builder: (context, cartProvider, child) {
+          // If the cart is still loading, show a loading indicator
+          if (cartProvider.isLoading) {
             return Center(
-                child: CircularProgressIndicator(
-              color: Colors.lightBlue,
-            ));
-          } else if (snapshot.hasError) {
+              child: CircularProgressIndicator(
+                color: Colors.lightBlue,
+              ),
+            );
+          }
+
+          // If there was an error fetching the cart
+          if (cartProvider.error != null) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -47,27 +52,30 @@ class _DetailPageState extends State<DetailPage> {
                   Icon(Icons.wifi_off, size: 50, color: Colors.red),
                   SizedBox(height: 10),
                   Text(
-                    "Network Error!",
+                    cartProvider.error!,
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.red, fontSize: 16),
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
-                      setState(() {
-                        _cartFuture = cartService.getCartById(id: widget.id);
-                      });
+                      // Retry fetching the cart
+                      cartProvider.fetchCartID(widget.id);
                     },
                     child: Text("Retry"),
                   ),
                 ],
               ),
             );
-          } else if (!snapshot.hasData || snapshot.data == null) {
+          }
+
+          // If no cart data is found
+          if (cartProvider.cart == null) {
             return Center(child: Text("No cart found!"));
           }
 
-          Carts cart = snapshot.data!;
+          // Cart data is available
+          Carts cart = cartProvider.cart!;
 
           return ListView(
             padding: EdgeInsets.all(12),
@@ -77,7 +85,7 @@ class _DetailPageState extends State<DetailPage> {
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height / 5,
                   margin: EdgeInsets.only(bottom: 15),
-                  padding: EdgeInsets.all(15),
+                  padding: EdgeInsets.all(10),
                   decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.shade400),
                       borderRadius: BorderRadius.circular(20),
@@ -106,7 +114,7 @@ class _DetailPageState extends State<DetailPage> {
                               loadingBuilder:
                                   (context, child, loadingProgress) {
                                 if (loadingProgress == null) {
-                                  return child; // Image has finished loading, return the image itself
+                                  return child;
                                 } else {
                                   return SizedBox(
                                     width: 80,
@@ -125,7 +133,7 @@ class _DetailPageState extends State<DetailPage> {
                                             : null,
                                       ),
                                     ),
-                                  ); // Show loading indicator while the image is loading
+                                  );
                                 }
                               },
                               errorBuilder: (context, error, stackTrace) =>

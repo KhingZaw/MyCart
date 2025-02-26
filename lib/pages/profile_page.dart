@@ -13,7 +13,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Load user data if not already loaded
     final profileProvider =
         Provider.of<ProfileProvider>(context, listen: false);
     if (profileProvider.username.isEmpty) {

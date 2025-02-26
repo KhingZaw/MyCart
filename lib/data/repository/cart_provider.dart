@@ -18,13 +18,14 @@ class CartProvider with ChangeNotifier {
   // Fetch all carts
   Future<void> fetchCarts() async {
     _isLoading = true;
-    _error = null;
     notifyListeners();
 
     try {
       _carts = await _cartService.getAllCartsData();
+
+      _error = null;
     } catch (e) {
-      _error = "Failed to fetch cart list: ${e.toString()}";
+      _error = "Network Error!";
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -32,15 +33,16 @@ class CartProvider with ChangeNotifier {
   }
 
   // Fetch a single cart by ID
-  Future<void> fetchCart(int id) async {
+  Future<void> fetchCartID(int id) async {
     _isLoading = true;
-    _error = null;
     notifyListeners();
 
     try {
       _cart = await _cartService.getCartById(id: id);
+
+      _error = null;
     } catch (e) {
-      _error = "Failed to fetch cart details: ${e.toString()}";
+      _error = "Network Error!";
       _cart = null; // ✅ Reset cart data on error
     }
 
